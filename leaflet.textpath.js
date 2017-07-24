@@ -102,18 +102,22 @@ var PolylineTextPath = {
 
         this._path.setAttribute('id', id);
 
+        /* Compute single pattern length */
+        var pattern = L.SVG.create('text');
+        for (var attr in options.attributes)
+            pattern.setAttribute(attr, options.attributes[attr]);
+        pattern.appendChild(document.createTextNode(text));
+        svg.appendChild(pattern);
+        var alength = pattern.getComputedTextLength();
+        svg.removeChild(pattern);
+        var plength = this._path.getTotalLength();
+
+        if ( plength / alength < 1 ) { return; }
+
         if (options.repeat) {
-            /* Compute single pattern length */
-            var pattern = L.SVG.create('text');
-            for (var attr in options.attributes)
-                pattern.setAttribute(attr, options.attributes[attr]);
-            pattern.appendChild(document.createTextNode(text));
-            svg.appendChild(pattern);
-            var alength = pattern.getComputedTextLength();
-            svg.removeChild(pattern);
 
             /* Create string as long as path */
-            text = new Array(Math.ceil(this._path.getTotalLength() / alength)).join(text);
+            text = new Array(Math.ceil( plength / alength)).join(text);
         }
 
         /* Put it along the path using textPath */
@@ -139,10 +143,10 @@ var PolylineTextPath = {
 
         /* Center text according to the path's bounding box */
         if (options.center) {
-            var textWidth = textNode.getBBox().width;
-            var pathWidth = this._path.getBoundingClientRect().width;
-            /* Set the position for the left side of the textNode */
-            textNode.setAttribute('dx', ((pathWidth / 2) - (textWidth / 2)));
+
+            /* center along the feature */
+            textNode.setAttribute('dx', ((plength / 2) - (alength / 2)));
+            
         }
 
         /* Initialize mouse events for the additional nodes */
